@@ -1,6 +1,7 @@
 # /veto/machine_tsd.py
 from django.db import transaction
 from django.utils import timezone
+from transitions import Machine
 from .models import (
     Series, SeriesState, SeriesRound, SeriesBan,
     SlotType, BanKind, GameMode, Map
@@ -34,6 +35,25 @@ class TurnError(TSDMachineError): ...
 class TSDMachine:
     def __init__(self, series_id: int):
         self.series_id = series_id
+
+        states = ['IDLE', 'BANNING', 'PICKING', 'FINALIZED']
+
+        transitions = [
+            {'trigger': 'start_banning', 'source': 'IDLE', 'dest': 'BANNING'},
+            {'trigger': 'start_picking', 'source': 'BANNING', 'dest': 'PICKING'},
+            {'trigger': 'finalize', 'source': 'PICKING', 'dest': 'FINALIZED'},
+            {'trigger': 'reset', 'source': '*', 'dest': 'IDLE'},
+        ]
+
+        # Initialize the state machine with the current state from the model
+        super().__init__(model=self, states=states, transitions=transitions, initial=series.state)
+
+        # Persist state back to the model on every transition
+        self.on_transition += self._sync_state_to_model
+
+    def _sync_state_to_model(self, event):
+        self.series.state = self.state
+        self.series.save()
 
     # ---- helpers ----
     def _expect_turn(self, s: Series, team: str, action: str, kind: str | None = None):
