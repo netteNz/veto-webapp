@@ -30,9 +30,9 @@ Create a new veto series with two teams.
   "team_a": "Red Dragons",
   "team_b": "Blue Cobras"
 }
-
+```
 Response
-
+```json
 {
   "id": 11,
   "team_a": "Red Dragons",
@@ -41,7 +41,7 @@ Response
   "created_at": "2025-08-17T02:53:49Z"
 }
 
-
+```
 
 ---
 
@@ -56,24 +56,24 @@ Returns the current state and transaction history of a series.
 
 🔸 Submit Action
 
-POST /api/series/{id}/action/
+POST `/api/series/{id}/action/`
 
 Submit a veto or map/gametype selection.
 
 Request Body
-
+```json
 {
   "type": "veto",
   "map": "Streets",
   "mode": "Oddball"
 }
-
+```
 
 ---
 
 🔸 Undo Last Action
 
-POST /api/series/{id}/undo/
+POST `/api/series/{id}/undo/`
 
 Undo the most recent action in the series.
 
@@ -82,7 +82,7 @@ Undo the most recent action in the series.
 
 🔸 Reset Series
 
-POST /api/series/{id}/reset/
+POST `/api/series/{id}/reset/`
 
 Resets the entire series to its initial state.
 
@@ -91,7 +91,7 @@ Resets the entire series to its initial state.
 
 🔸 List Maps
 
-GET /api/maps/
+GET `/api/maps/`
 
 Returns a list of all available maps and supported gametypes.
 
@@ -100,7 +100,7 @@ Returns a list of all available maps and supported gametypes.
 
 🔸 List Gametypes
 
-GET /api/gametypes/
+GET `/api/gametypes/`
 
 Returns a list of available game modes (e.g. Slayer, CTF, Strongholds).
 
