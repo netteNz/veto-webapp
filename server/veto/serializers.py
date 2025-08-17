@@ -34,5 +34,12 @@ class SeriesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Series
-        fields = ['id','team_a','team_b','created_at','actions']
+        fields = [
+            'id',
+            'team_a',
+            'team_b',
+            'created_at',
+            'actions',
+            'state',  # ✅ ADD THIS LINE
+        ]
         read_only_fields = ['created_at']
