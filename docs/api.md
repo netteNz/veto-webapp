@@ -24,7 +24,7 @@ Currently, the API is publicly accessible for testing and development purposes. 
 
 Create a new veto series with two teams.
 
-#### Request Body
+### Request Body
 ```json
 {
   "team_a": "Red Dragons",
