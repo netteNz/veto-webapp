@@ -5,3 +5,5 @@ djangorestframework==3.16.1
 setuptools==80.9.0
 sqlparse==0.5.3
 wheel==0.45.1
+mkdocs
+mkdocs-material
