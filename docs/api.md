@@ -45,16 +45,14 @@ Response
 
 ---
 
-###🔸 Get Series Details
+🔸 Get Series Details
 
 **GET** `/api/series/{id}/`
 
 Returns the current state and transaction history of a series.
 
 
----
-
-###🔸 Submit Action
+🔸 Submit Action
 
 **POST** `/api/series/{id}/action/`
 
@@ -71,28 +69,28 @@ Request Body
 
 ---
 
-### 🔸 Undo Last Action
+ 🔸 Undo Last Action
 
 **POST** `/api/series/{id}/undo/`
 
 Undo the most recent action in the series.
 
 
-### 🔸 Reset Series
+ 🔸 Reset Series
 
 **POST** `/api/series/{id}/reset/`
 
 Resets the entire series to its initial state.
 
 
-### 🔸 List Maps
+ 🔸 List Maps
 
 **GET** `/api/maps/`
 
 Returns a list of all available maps and supported gametypes.
 
 
-### 🔸 List Gametypes
+ 🔸 List Gametypes
 
 **GET** `/api/gametypes/`
 
