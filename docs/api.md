@@ -6,7 +6,7 @@ This document describes the API endpoints available for interacting with the Vet
 
 ## Base URL
 
-/api/
+`/api/`
 
 ---
 
@@ -31,7 +31,7 @@ Create a new veto series with two teams.
   "team_b": "Blue Cobras"
 }
 ```
-Response
+### Response
 ```json
 {
   "id": 11,
@@ -40,19 +40,19 @@ Response
   "state": "idle",
   "created_at": "2025-08-17T02:53:49Z"
 }
-
 ```
 
 ---
 
-🔸 Get Series Details
+### 🔸 Get Series Details
 
 **GET** `/api/series/{id}/`
 
 Returns the current state and transaction history of a series.
 
+---
 
-🔸 Submit Action
+### 🔸 Submit Action
 
 **POST** `/api/series/{id}/action/`
 
@@ -69,28 +69,28 @@ Request Body
 
 ---
 
- 🔸 Undo Last Action
+### 🔸 Undo Last Action
 
 **POST** `/api/series/{id}/undo/`
 
 Undo the most recent action in the series.
 
 
- 🔸 Reset Series
+### 🔸 Reset Series
 
 **POST** `/api/series/{id}/reset/`
 
 Resets the entire series to its initial state.
 
 
- 🔸 List Maps
+### 🔸 List Maps
 
 **GET** `/api/maps/`
 
 Returns a list of all available maps and supported gametypes.
 
 
- 🔸 List Gametypes
+### 🔸 List Gametypes
 
 **GET** `/api/gametypes/`
 
@@ -119,23 +119,23 @@ Returns a list of available game modes (e.g. Slayer, CTF, Strongholds).
 
 Example Flow
 
-1. POST /api/series/ → Create series
+1. **POST** `/api/series/` → Create series
 
 
-2. POST /api/series/{id}/action/ → Submit valid action
+2. **POST** `/api/series/{id}/action/` → Submit valid action
 
 
-3. POST /api/series/{id}/undo/ → Undo previous action
+3. **POST** `/api/series/{id}/undo/` → Undo previous action
 
 
-4. POST /api/series/{id}/reset/ → Reset the series
+4. **POST** `/api/series/{id}/reset/` → Reset the series
 
 
 
 
 ---
 
-Notes
+### Notes
 
 All action requests are validated by the internal state machine and will return a 422 response if invalid for the current state.
 

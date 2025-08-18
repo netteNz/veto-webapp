@@ -13,7 +13,6 @@ theme:
           icon: material/weather-night
           name: Switch to dark mode
 
-
 nav:
   - Home: index.md
   - Philosophy: philosophy.md
