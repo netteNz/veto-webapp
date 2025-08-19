@@ -99,6 +99,36 @@ class SeriesViewSet(viewsets.ModelViewSet):
             mode=mode_obj,
         )
         return Response(ActionSerializer(act).data, status=status.HTTP_201_CREATED)
+    
+    @action(detail=True, methods=["post"], url_path="assign_roles", url_name="series-assign-roles")
+    def assign_roles(self, request, pk=None):
+        m = TSDMachine(pk)
+        team_a = request.data.get("team_a", "").strip()
+        team_b = request.data.get("team_b", "").strip()
+
+        if not team_a or not team_b:
+            return Response({"detail": "Both team_a and team_b are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            m.assign_roles(team_a=team_a, team_b=team_b)
+            return Response({"detail": "Roles assigned"}, status=status.HTTP_200_OK)
+        except GuardError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+    @action(detail=True, methods=["post"], url_path="confirm_tsd", url_name="series-confirm-tsd")
+    def confirm_tsd(self, request, pk=None):
+        m = TSDMachine(pk)
+        series_type = request.data.get("series_type", "").strip()
+
+        if not series_type:
+            return Response({"detail": "Missing series_type"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            m.confirm_tsd(series_type=series_type)
+            return Response({"detail": "Series confirmed"}, status=status.HTTP_200_OK)
+        except GuardError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
     @action(detail=True, methods=["post"], url_name="series-undo")
     def undo(self, request, pk=None):
