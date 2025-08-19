@@ -67,22 +67,27 @@ class SeriesViewSet(viewsets.ModelViewSet):
         team_label = (request.data.get("team") or "").strip()
         team_code = ""
         if team_label:
-            if s.team_a and team_label.lower() == s.team_a.lower():
+            if team_label == s.team_a:
                 team_code = "A"
-            elif s.team_b and team_label.lower() == s.team_b.lower():
+            elif team_label == s.team_b:
                 team_code = "B"
+        
         # Strict: no fallback to first letter, ensure team matches one of the series teams
         if not team_code:
-            return Response({"detail": "Invalid or missing team"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Invalid or missing team"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             map_obj = Map.objects.get(pk=request.data.get("map"))
             mode_obj = GameMode.objects.get(pk=request.data.get("mode"))
         except (Map.DoesNotExist, GameMode.DoesNotExist):
-            return Response({"detail": "Invalid map or mode"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Invalid map or mode"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        step = (s.actions.aggregate_max_step() if hasattr(s.actions, 'aggregate_max_step') else None)
-        # simple incremental step based on count
         step = (s.actions.count() or 0) + 1
 
         act = Action.objects.create(
@@ -95,83 +100,12 @@ class SeriesViewSet(viewsets.ModelViewSet):
         )
         return Response(ActionSerializer(act).data, status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=["post"])
-    def assign_roles(self, request, pk=None):
-        m = TSDMachine(pk)
-        team_a = request.data.get("team_a")
-        team_b = request.data.get("team_b")
-        try:
-            s = m.assign_roles(team_a, team_b)
-            return Response(SeriesSerializer(s).data)
-        except (GuardError, TurnError) as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=["post"])
-    def confirm_tsd(self, request, pk=None):
-        m = TSDMachine(pk)
-        series_type = request.data.get("series_type")
-        try:
-            s = m.confirm_tsd(series_type)
-            return Response(SeriesSerializer(s).data)
-        except (GuardError, TurnError) as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=["post"])
-    def ban_objective(self, request, pk=None):
-        m = TSDMachine(pk)
-        try:
-            s = m.ban_objective_combo(
-                team=request.data.get("team"),
-                objective_mode_id=request.data.get("objective_mode_id"),
-                map_id=request.data.get("map_id"),
-            )
-            return Response(SeriesSerializer(s).data)
-        except (GuardError, TurnError) as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=["post"])
-    def ban_slayer(self, request, pk=None):
-        m = TSDMachine(pk)
-        try:
-            s = m.ban_slayer_map(
-                team=request.data.get("team"),
-                map_id=request.data.get("map_id"),
-            )
-            return Response(SeriesSerializer(s).data)
-        except (GuardError, TurnError) as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=["post"])
-    def pick_objective(self, request, pk=None):
-        m = TSDMachine(pk)
-        try:
-            s = m.pick_objective_combo(
-                team=request.data.get("team"),
-                objective_mode_id=request.data.get("objective_mode_id"),
-                map_id=request.data.get("map_id"),
-            )
-            return Response(SeriesSerializer(s).data)
-        except (GuardError, TurnError) as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=["post"])
-    def pick_slayer(self, request, pk=None):
-        m = TSDMachine(pk)
-        try:
-            s = m.pick_slayer_map(
-                team=request.data.get("team"),
-                map_id=request.data.get("map_id"),
-            )
-            return Response(SeriesSerializer(s).data)
-        except (GuardError, TurnError) as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
     @action(detail=True, methods=["post"], url_name="series-undo")
     def undo(self, request, pk=None):
         m = TSDMachine(pk)
         try:
-            s = m.undo_last()
-            return Response(SeriesSerializer(s).data)
+            m.undo_last()
+            return Response({"detail": "Undo successful"}, status=status.HTTP_200_OK)
         except (GuardError, TurnError) as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -179,8 +113,10 @@ class SeriesViewSet(viewsets.ModelViewSet):
     def reset(self, request, pk=None):
         m = TSDMachine(pk)
         try:
-            s = m.reset()
-            return Response(SeriesSerializer(s).data)
+            m.reset()
+            # Also clear any Action objects if they exist
+            Action.objects.filter(series_id=pk).delete()
+            return Response({"detail": "Reset successful"}, status=status.HTTP_200_OK)
         except (GuardError, TurnError) as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
