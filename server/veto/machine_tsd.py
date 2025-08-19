@@ -32,9 +32,10 @@ class TSDMachineError(Exception): ...
 class GuardError(TSDMachineError): ...
 class TurnError(TSDMachineError): ...
 
-class TSDMachine:
+class TSDMachine(Machine):
     def __init__(self, series_id: int):
         self.series_id = series_id
+        self.series = Series.objects.get(pk=series_id)
 
         states = ['IDLE', 'BANNING', 'PICKING', 'FINALIZED']
 
@@ -45,11 +46,8 @@ class TSDMachine:
             {'trigger': 'reset', 'source': '*', 'dest': 'IDLE'},
         ]
 
-        # Initialize the state machine with the current state from the model
-        super().__init__(model=self, states=states, transitions=transitions, initial=series.state)
-
-        # Persist state back to the model on every transition
-        self.on_transition += self._sync_state_to_model
+        super().__init__(model=self, states=states, transitions=transitions, initial='IDLE')
+        self.add_transition(trigger='*', source='*', dest='*', after='_sync_state_to_model')
 
     def _sync_state_to_model(self, event):
         self.series.state = self.state

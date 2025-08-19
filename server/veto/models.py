@@ -134,5 +134,15 @@ class Action(models.Model):
         )
         ordering = ['step', 'id']
 
+    def save(self, *args, **kwargs):
+        # Auto-assign default values if missing to satisfy NOT NULL constraints
+        if not self.action_type:
+            self.action_type = Action.BAN
+        if not self.step:
+            # Next step for this series: max(step) + 1
+            last = Action.objects.filter(series=self.series).order_by('-step').first()
+            self.step = (last.step if last else 0) + 1
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.get_action_type_display()} {self.map.name} {self.mode.name} (step {self.step})"

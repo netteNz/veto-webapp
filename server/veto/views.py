@@ -8,6 +8,7 @@ from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
+from django.shortcuts import get_object_or_404
 
 from .models import Map, GameMode, Series, Action
 from .serializers import (
@@ -49,6 +50,50 @@ class SeriesViewSet(viewsets.ModelViewSet):
     queryset = Series.objects.all().prefetch_related('actions')
     serializer_class = SeriesSerializer
     # --- New minimal actions ---
+
+    @action(detail=True, methods=["get"], url_path="state", url_name="series-state")
+    def state(self, request, pk=None):
+        s = get_object_or_404(Series, pk=pk)
+        return Response({"state": s.state}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"], url_path="veto", url_name="series-veto")
+    def veto(self, request, pk=None):
+        """
+        Minimal placeholder endpoint to record a veto/pick action for tests.
+        Accepts: {"team": str, "map": int, "mode": int}
+        Creates an Action and returns 201.
+        """
+        s = get_object_or_404(Series, pk=pk)
+        team_label = (request.data.get("team") or "").strip()
+        team_code = ""
+        if team_label:
+            if s.team_a and team_label.lower() == s.team_a.lower():
+                team_code = "A"
+            elif s.team_b and team_label.lower() == s.team_b.lower():
+                team_code = "B"
+        # Strict: no fallback to first letter, ensure team matches one of the series teams
+        if not team_code:
+            return Response({"detail": "Invalid or missing team"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            map_obj = Map.objects.get(pk=request.data.get("map"))
+            mode_obj = GameMode.objects.get(pk=request.data.get("mode"))
+        except (Map.DoesNotExist, GameMode.DoesNotExist):
+            return Response({"detail": "Invalid map or mode"}, status=status.HTTP_400_BAD_REQUEST)
+
+        step = (s.actions.aggregate_max_step() if hasattr(s.actions, 'aggregate_max_step') else None)
+        # simple incremental step based on count
+        step = (s.actions.count() or 0) + 1
+
+        act = Action.objects.create(
+            series=s,
+            step=step,
+            action_type=Action.BAN,
+            team=team_code,
+            map=map_obj,
+            mode=mode_obj,
+        )
+        return Response(ActionSerializer(act).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"])
     def assign_roles(self, request, pk=None):
@@ -121,7 +166,7 @@ class SeriesViewSet(viewsets.ModelViewSet):
         except (GuardError, TurnError) as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["post"], url_name="series-undo")
     def undo(self, request, pk=None):
         m = TSDMachine(pk)
         try:
@@ -130,7 +175,7 @@ class SeriesViewSet(viewsets.ModelViewSet):
         except (GuardError, TurnError) as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["post"], url_name="series-reset")
     def reset(self, request, pk=None):
         m = TSDMachine(pk)
         try:
