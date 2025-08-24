@@ -44,11 +44,30 @@ class MapViewSet(viewsets.ModelViewSet):
 
 
 class SeriesViewSet(viewsets.ModelViewSet):
-    """
-    Basic CRUD for series. Actions are nested via ActionViewSet.
-    """
-    queryset = Series.objects.all().prefetch_related('actions')
+    queryset = Series.objects.all()
     serializer_class = SeriesSerializer
+
+    def create(self, request, *args, **kwargs):
+        """Create a new series"""
+        try:
+            # Create a new series with default values
+            series = Series.objects.create(
+                # Add any default fields your Series model requires
+                # For example, if you need team names:
+                team_a="Team A",
+                team_b="Team B"
+            )
+            
+            serializer = self.get_serializer(series)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            print(f"[DEBUG] Series creation error: {e}")
+            return Response(
+                {"detail": f"Failed to create series: {str(e)}"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
     # --- New minimal actions ---
 
     @action(detail=True, methods=["get"], url_path="state", url_name="series-state")
@@ -130,25 +149,85 @@ class SeriesViewSet(viewsets.ModelViewSet):
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-    @action(detail=True, methods=["post"], url_name="series-undo")
-    def undo(self, request, pk=None):
-        m = TSDMachine(pk)
-        try:
-            m.undo_last()
-            return Response({"detail": "Undo successful"}, status=status.HTTP_200_OK)
-        except (GuardError, TurnError) as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
     @action(detail=True, methods=["post"], url_name="series-reset")
     def reset(self, request, pk=None):
-        m = TSDMachine(pk)
+        """Reset the series using TSD machine"""
         try:
-            m.reset()
-            # Also clear any Action objects if they exist
-            Action.objects.filter(series_id=pk).delete()
-            return Response({"detail": "Reset successful"}, status=status.HTTP_200_OK)
+            m = TSDMachine(pk)
+            m.reset()  # ✅ This method exists in your TSD machine
+            return Response({"detail": "Series reset successfully"}, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            print(f"[DEBUG] Reset error: {e}")
+            return Response({"detail": f"Reset error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=["post"], url_name="series-undo")
+    def undo(self, request, pk=None):
+        """Undo the last action using TSD machine"""
+        try:
+            m = TSDMachine(pk)
+            m.undo_last()  # ✅ Change from m.undo() to m.undo_last()
+            return Response({"detail": "Last action undone successfully"}, status=status.HTTP_200_OK)
+            
         except (GuardError, TurnError) as e:
+            print(f"[DEBUG] Undo error: {e}")
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"[DEBUG] Undo error: {e}")
+            return Response({"detail": f"Undo error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=["post"], url_path="ban_objective_combo", url_name="series-ban-objective-combo")
+    def ban_objective_combo(self, request, pk=None):
+        """Ban an objective combo using TSD machine"""
+        try:
+            m = TSDMachine(pk)
+            team = request.data.get("team", "").strip()
+            objective_mode_id = request.data.get("objective_mode_id")
+            map_id = request.data.get("map_id")
+            
+            print(f"[DEBUG] ban_objective_combo called: team={team}, mode={objective_mode_id}, map={map_id}")
+            
+            if not all([team, objective_mode_id, map_id]):
+                return Response(
+                    {"detail": "Missing required fields: team, objective_mode_id, map_id"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            m.ban_objective_combo(team, objective_mode_id, map_id)
+            return Response({"detail": "Objective combo banned successfully"}, status=status.HTTP_200_OK)
+            
+        except (GuardError, TurnError) as e:
+            print(f"[DEBUG] TSD error: {e}")
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"[DEBUG] Unexpected error: {e}")
+            return Response({"detail": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=["post"], url_path="ban_slayer_map", url_name="series-ban-slayer-map")
+    def ban_slayer_map(self, request, pk=None):
+        """Ban a slayer map using TSD machine"""
+        try:
+            m = TSDMachine(pk)
+            team = request.data.get("team", "").strip()
+            map_id = request.data.get("map_id")
+            
+            print(f"[DEBUG] ban_slayer_map called: team={team}, map={map_id}")
+            
+            if not all([team, map_id]):
+                return Response(
+                    {"detail": "Missing required fields: team, map_id"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            m.ban_slayer_map(team, map_id)
+            return Response({"detail": "Slayer map banned successfully"}, status=status.HTTP_200_OK)
+            
+        except (GuardError, TurnError) as e:
+            print(f"[DEBUG] TSD error: {e}")
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"[DEBUG] Unexpected error: {e}")
+            return Response({"detail": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ActionViewSet(viewsets.ModelViewSet):
