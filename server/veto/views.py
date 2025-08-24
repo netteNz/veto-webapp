@@ -230,6 +230,84 @@ class SeriesViewSet(viewsets.ModelViewSet):
             return Response({"detail": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+    @action(detail=True, methods=["post"], url_path="pick_objective_combo", url_name="series-pick-objective-combo")
+    def pick_objective_combo(self, request, pk=None):
+        """Pick an objective combo using TSD machine"""
+        try:
+            team = request.data.get("team")
+            map_id = request.data.get("map")
+            mode_id = request.data.get("mode")
+            
+            if not all([team, map_id, mode_id]):
+                return Response(
+                    {"detail": "team, map, and mode are required"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            print(f"[DEBUG] pick_objective_combo called: team={team}, mode={mode_id}, map={map_id}")
+            
+            m = TSDMachine(pk)
+            # Check what method name exists in your TSD machine
+            if hasattr(m, 'pick_objective_combo'):
+                m.pick_objective_combo(team, int(mode_id), int(map_id))
+            elif hasattr(m, 'pick_combo'):
+                m.pick_combo(team, int(mode_id), int(map_id))
+            elif hasattr(m, 'pick_objective'):
+                m.pick_objective(team, int(mode_id), int(map_id))
+            else:
+                return Response(
+                    {"detail": "Pick method not found in TSD machine"}, 
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            return Response({"detail": "Objective combo picked successfully"}, status=status.HTTP_200_OK)
+            
+        except (GuardError, TurnError) as e:
+            print(f"[DEBUG] Pick error: {e}")
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"[DEBUG] Pick error: {e}")
+            return Response({"detail": f"Pick error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=["post"], url_path="pick_slayer_map", url_name="series-pick-slayer-map")
+    def pick_slayer_map(self, request, pk=None):
+        """Pick a slayer map using TSD machine"""
+        try:
+            team = request.data.get("team")
+            map_id = request.data.get("map")
+            
+            if not all([team, map_id]):
+                return Response(
+                    {"detail": "team and map are required"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            print(f"[DEBUG] pick_slayer_map called: team={team}, map={map_id}")
+            
+            m = TSDMachine(pk)
+            # Check what method name exists in your TSD machine
+            if hasattr(m, 'pick_slayer_map'):
+                m.pick_slayer_map(team, int(map_id))
+            elif hasattr(m, 'pick_slayer'):
+                m.pick_slayer(team, int(map_id))
+            elif hasattr(m, 'pick_map'):
+                m.pick_map(team, int(map_id))
+            else:
+                return Response(
+                    {"detail": "Pick slayer method not found in TSD machine"}, 
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            return Response({"detail": "Slayer map picked successfully"}, status=status.HTTP_200_OK)
+            
+        except (GuardError, TurnError) as e:
+            print(f"[DEBUG] Pick error: {e}")
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"[DEBUG] Pick error: {e}")
+            return Response({"detail": f"Pick error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class ActionViewSet(viewsets.ModelViewSet):
     """
     CRUD for actions. On create/update, ensure the chosen mode is valid for the chosen map.
