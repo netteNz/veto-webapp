@@ -5,7 +5,6 @@ A modern web-based veto system for competitive Halo matchups. This tool streamli
 Built with:
 - 🔧 Django REST Framework (backend)
 - ⚛️ React + TailwindCSS + Vite (frontend)
-- ⚙️ RESTful step-based transaction logic
 
 ---
 
@@ -38,8 +37,6 @@ This project was built with the following principles:
 
 ```plaintext
 veto-webapp/
-├── client/             # React + Tailwind + Vite frontend
-│   └── veto-board/
 ├── server/             # Django backend
 │   ├── api/            # DRF logic and views
 │   └── veto/           # Models and business logic
