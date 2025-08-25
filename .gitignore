@@ -1,0 +1,41 @@
+# OS / Editor junk
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*$py.class
+
+# Virtual environments
+.venv/
+env/
+venv/
+pip-wheel-metadata/
+*.egg-info/
+.eggs/
+
+# Logs & coverage
+*.log
+coverage/
+.coverage
+.tox/
+pytest_cache/
+
+# Django specific
+db.sqlite3
+*.db
+media/
+server/staticfiles/
+
+# Node (in case any frontend tools sneak back in)
+node_modules/
+
+# MkDocs build directory
+site/
