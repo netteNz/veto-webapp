@@ -15,7 +15,7 @@ __pycache__/
 
 # Virtual environments
 .venv/
-env/
+.env/
 venv/
 pip-wheel-metadata/
 *.egg-info/
