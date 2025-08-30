@@ -68,7 +68,6 @@ CSRF_TRUSTED_ORIGINS = [
     "https://netteNz.github.io",
 ]
 
-
 CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'api.urls'
@@ -94,13 +93,22 @@ WSGI_APPLICATION = 'api.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+_db_url = os.getenv("DATABASE_URL", "").strip()
 
-DATABASES = {
-    "default": dj_database_url.config(
-        conn_max_age=600,
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-    )
-}
+def sqlite_default():
+    return {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+
+if _db_url:
+    try:
+        DATABASES = {"default": dj_database_url.parse(_db_url, conn_max_age=600)}
+    except Exception:
+        # Malformed/unsupported URL -> safe fallback
+        DATABASES = {"default": sqlite_default()}
+else:
+    DATABASES = {"default": sqlite_default()}
 
 # Static (for admin, etc.)
 STATIC_URL = "/static/"
