@@ -26,7 +26,7 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "your-default-secret-key")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = ["*.onrender.com", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = [".onrender.com", "localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -63,10 +63,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://*.onrender.com",
-    "https://netteNz.github.io",
-]
+CSRF_TRUSTED_ORIGINS = ["https://*.onrender.com", "https://nettenz.github.io"]
 
 CORS_ALLOW_CREDENTIALS = True
 
