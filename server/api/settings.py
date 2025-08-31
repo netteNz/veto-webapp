@@ -83,15 +83,23 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-
 CORS_ALLOWED_ORIGINS = [
-    "https://netteNz.github.io",
+    "https://nettenz.github.io",
     "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
 
-CSRF_TRUSTED_ORIGINS = ["https://*.onrender.com", "https://nettenz.github.io"]
-
 CORS_ALLOW_CREDENTIALS = True
+
+# (optional, but can make preflight explicit)
+CORS_ALLOW_HEADERS = [
+    "accept", "accept-encoding", "authorization", "content-type",
+    "dnt", "origin", "user-agent", "x-csrftoken", "x-requested-with",
+]
+
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+
+CSRF_TRUSTED_ORIGINS = ["https://*.onrender.com", "https://nettenz.github.io"]
 
 ROOT_URLCONF = 'api.urls'
 
