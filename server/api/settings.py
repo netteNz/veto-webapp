@@ -66,14 +66,14 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
 
-    # Catch any unhandled exceptions under /api/* and return JSON (prod-safe)
+    # CORS MUST be as high as possible
+    "corsheaders.middleware.CorsMiddleware",
+
+    # Your JSON error wrapper can sit after CORS
     "api.middleware.ApiErrorsAsJson",
 
-    # Serve static files quickly (should come before anything that might touch responses)
+    # Static
     "whitenoise.middleware.WhiteNoiseMiddleware",
-
-    # Add CORS headers early (must be before CommonMiddleware)
-    "corsheaders.middleware.CorsMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -82,6 +82,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
 
 CORS_ALLOWED_ORIGINS = [
     "https://nettenz.github.io",
