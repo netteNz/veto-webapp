@@ -40,6 +40,8 @@ REST_FRAMEWORK = {
     ],
 }
 
+REST_FRAMEWORK["EXCEPTION_HANDLER"] = "api.exceptions.drf_exception_handler"
+# Allow only on .onrender.com in prod, localhost for dev
 
 ALLOWED_HOSTS = [".onrender.com", "localhost", "127.0.0.1"]
 
@@ -62,16 +64,25 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+
+    # Catch any unhandled exceptions under /api/* and return JSON (prod-safe)
+    "api.middleware.ApiErrorsAsJson",
+
+    # Serve static files quickly (should come before anything that might touch responses)
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+
+    # Add CORS headers early (must be before CommonMiddleware)
+    "corsheaders.middleware.CorsMiddleware",
+
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
 
 CORS_ALLOWED_ORIGINS = [
     "https://netteNz.github.io",
