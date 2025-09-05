@@ -25,8 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "your-default-secret-key")
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
+# Consolidated REST_FRAMEWORK configuration
 REST_FRAMEWORK = {
-    # Always accept JSON, never HTML in prod
+    # Renderers: JSON only in prod; Browsable in DEBUG
     "DEFAULT_RENDERER_CLASSES": (
         ["rest_framework.renderers.JSONRenderer"]
         if not DEBUG else
@@ -35,12 +36,19 @@ REST_FRAMEWORK = {
             "rest_framework.renderers.BrowsableAPIRenderer",  # dev-only
         ]
     ),
-    "DEFAULT_PARSER_CLASSES": [
-        "rest_framework.parsers.JSONParser",
-    ],
-}
+    "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
 
-REST_FRAMEWORK["EXCEPTION_HANDLER"] = "api.exceptions.drf_exception_handler"
+    # Pagination
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 50,
+
+    # Auth/perm (prototype)
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
+
+    # Exception handler
+    "EXCEPTION_HANDLER": "api.exceptions.drf_exception_handler",
+}
 # Allow only on .onrender.com in prod, localhost for dev
 
 ALLOWED_HOSTS = [".onrender.com", "localhost", "127.0.0.1"]
@@ -49,6 +57,8 @@ ALLOWED_HOSTS = [".onrender.com", "localhost", "127.0.0.1"]
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
+    # Django default apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -58,9 +68,12 @@ INSTALLED_APPS = [
     # CORS headers
     'corsheaders',
     'rest_framework',
+    'dal',
+    'dal_select2',
+    'import_export',
+    'django_extensions',
     # local
     'veto',
-    'django_extensions'
 ]
 
 MIDDLEWARE = [
@@ -74,7 +87,6 @@ MIDDLEWARE = [
 
     # Static
     "whitenoise.middleware.WhiteNoiseMiddleware",
-
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -155,17 +167,6 @@ USE_X_FORWARDED_HOST = True
 
 
 
-REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 50,
-    # For prototyping, allow unauthenticated reads/writes. Lock down later.
-    'DEFAULT_AUTHENTICATION_CLASSES': [],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-    ],
-}
-
-
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
@@ -199,8 +200,6 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
-
-STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

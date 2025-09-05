@@ -9,5 +9,6 @@ def healthz(_):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('admin/veto/', include('veto.admin_urls')),  # DAL autocomplete endpoint
     path('api/', include('veto.urls')),   # delegate to the app
 ] + [path('healthz/', healthz)]
