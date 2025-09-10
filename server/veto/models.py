@@ -86,21 +86,17 @@ class SeriesRound(models.Model):
 
 class SeriesBan(models.Model):
     """
-    Immutable bans captured during the 7-step ban phase.
+    Immutable bans captured during the 5-step ban phase.
     OBJECTIVE_COMBO bans require both objective_mode and map.
     SLAYER_MAP bans only require a map.
     """
-    series = models.ForeignKey('Series', on_delete=models.CASCADE, related_name='bans')
-    step_index = models.PositiveIntegerField()  # 0..6
+    series = models.ForeignKey('Series', on_delete=models.CASCADE, related_name='bans')  # <-- add this
+    # step_index is 0..4 (5 steps)
+    step_index = models.PositiveIntegerField()  # 0..4
     by_team = models.CharField(max_length=1)    # "A" | "B"
     kind = models.CharField(max_length=32, choices=BanKind.choices)
-
-    # Slayer map bans use only `map`
     map = models.ForeignKey('Map', on_delete=models.PROTECT)
-
-    # Objective+Map bans include the objective mode used in the ban
     objective_mode = models.ForeignKey('GameMode', null=True, blank=True, on_delete=models.PROTECT)
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -7,16 +7,15 @@ from .models import (
     SlotType, BanKind, GameMode, Map
 )
 
-# 7-step ban schedule (A×3 Objective-combo, B×2 Objective-combo, B×1 Slayer, A×1 Slayer)
+# 5-step ban schedule (A obj, B obj, A obj, B slayer, A slayer)
 BAN_SCHEDULE = [
-    ("A", BanKind.OBJECTIVE_COMBO),
-    ("B", BanKind.OBJECTIVE_COMBO),
     ("A", BanKind.OBJECTIVE_COMBO),
     ("B", BanKind.OBJECTIVE_COMBO),
     ("A", BanKind.OBJECTIVE_COMBO),
     ("B", BanKind.SLAYER_MAP),
     ("A", BanKind.SLAYER_MAP),
 ]
+
 
 ROUND_SLOTS = {
     "Bo3": [SlotType.OBJECTIVE, SlotType.SLAYER, SlotType.OBJECTIVE],
@@ -177,8 +176,10 @@ class TSDMachine(Machine):
             raise GuardError("Invalid objective combo")
         if SeriesBan.objects.filter(series=s, kind=BanKind.OBJECTIVE_COMBO, objective_mode=mode, map=m).exists():
             raise GuardError("Combo is banned")
-        if not self._map_unused(s, m):
-            raise GuardError("Map already used in this series")
+
+        # Only block the exact Map+Mode if it was already picked
+        if SeriesRound.objects.filter(series=s, pick_map=m, mode=mode).exists():
+            raise GuardError("That objective combo was already picked")
 
         r.mode = mode
         r.pick_by = team
@@ -204,8 +205,10 @@ class TSDMachine(Machine):
             raise GuardError("Map is not valid for Slayer")
         if SeriesBan.objects.filter(series=s, kind=BanKind.SLAYER_MAP, map=m).exists():
             raise GuardError("This Slayer map is banned")
-        if not self._map_unused(s, m):
-            raise GuardError("Map already used in this series")
+
+        # Only block reuse of the map in SLAYER rounds (allow if used for Objective)
+        if SeriesRound.objects.filter(series=s, pick_map=m, slot_type=SlotType.SLAYER).exists():
+            raise GuardError("Map already used for Slayer")
 
         slayer = GameMode.objects.get(name="Slayer")
         r.mode = slayer

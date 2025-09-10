@@ -4,12 +4,11 @@ from .machine_tsd import TSDMachine, GuardError, TurnError
 from django.utils.text import slugify
 from rest_framework.decorators import action
 from collections import defaultdict
-from rest_framework import viewsets, status
+from rest_framework import status, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
-
 from .models import Map, GameMode, Series, Action
 from .serializers import (
     MapSerializer, MapWriteSerializer,
@@ -43,6 +42,18 @@ class MapViewSet(viewsets.ModelViewSet):
         return MapSerializer
 
 
+# Normalize team labels to "A"/"B"
+def _as_team_code(series: Series, raw: str) -> str:
+    v = (raw or "").strip()
+    if v in ("A", "B"):
+        return v
+    if v == series.team_a:
+        return "A"
+    if v == series.team_b:
+        return "B"
+    raise GuardError("Invalid or unknown team")
+
+# Change base class so get_serializer exists
 class SeriesViewSet(viewsets.ModelViewSet):
     queryset = Series.objects.all()
     serializer_class = SeriesSerializer
@@ -50,21 +61,16 @@ class SeriesViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         """Create a new series"""
         try:
-            # Create a new series with default values
             series = Series.objects.create(
-                # Add any default fields your Series model requires
-                # For example, if you need team names:
-                team_a="Team A",
-                team_b="Team B"
+                team_a=request.data.get("team_a", "Team A"),
+                team_b=request.data.get("team_b", "Team B"),
             )
-            
             serializer = self.get_serializer(series)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-            
         except Exception as e:
             print(f"[DEBUG] Series creation error: {e}")
             return Response(
-                {"detail": f"Failed to create series: {str(e)}"}, 
+                {"detail": f"Failed to create series: {str(e)}"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -180,133 +186,71 @@ class SeriesViewSet(viewsets.ModelViewSet):
     def ban_objective_combo(self, request, pk=None):
         """Ban an objective combo using TSD machine"""
         try:
-            m = TSDMachine(pk)
-            team = request.data.get("team", "").strip()
-            objective_mode_id = request.data.get("objective_mode_id")
-            map_id = request.data.get("map_id")
-            
-            print(f"[DEBUG] ban_objective_combo called: team={team}, mode={objective_mode_id}, map={map_id}")
-            
-            if not all([team, objective_mode_id, map_id]):
-                return Response(
-                    {"detail": "Missing required fields: team, objective_mode_id, map_id"}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            m.ban_objective_combo(team, objective_mode_id, map_id)
-            return Response({"detail": "Objective combo banned successfully"}, status=status.HTTP_200_OK)
-            
+            s = get_object_or_404(Series, pk=pk)
+            team_raw = request.data.get("team")
+            map_id = request.data.get("map_id") or request.data.get("map")
+            mode_id = (request.data.get("objective_mode_id")
+                       or request.data.get("mode_id")
+                       or request.data.get("mode"))
+            if not all([team_raw, map_id, mode_id]):
+                return Response({"detail": "team, map/map_id, and mode/mode_id are required"},
+                                status=status.HTTP_400_BAD_REQUEST)
+            team = _as_team_code(s, team_raw)
+            TSDMachine(pk).ban_objective_combo(team, int(mode_id), int(map_id))
+            return Response({"detail": "Objective combo banned"}, status=status.HTTP_200_OK)
         except (GuardError, TurnError) as e:
-            print(f"[DEBUG] TSD error: {e}")
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            print(f"[DEBUG] Unexpected error: {e}")
-            return Response({"detail": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=["post"], url_path="ban_slayer_map", url_name="series-ban-slayer-map")
     def ban_slayer_map(self, request, pk=None):
         """Ban a slayer map using TSD machine"""
         try:
-            m = TSDMachine(pk)
-            team = request.data.get("team", "").strip()
-            map_id = request.data.get("map_id")
-            
-            print(f"[DEBUG] ban_slayer_map called: team={team}, map={map_id}")
-            
-            if not all([team, map_id]):
-                return Response(
-                    {"detail": "Missing required fields: team, map_id"}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            m.ban_slayer_map(team, map_id)
-            return Response({"detail": "Slayer map banned successfully"}, status=status.HTTP_200_OK)
-            
+            s = get_object_or_404(Series, pk=pk)
+            team_raw = request.data.get("team")
+            map_id = request.data.get("map_id") or request.data.get("map")
+            if not all([team_raw, map_id]):
+                return Response({"detail": "team and map/map_id are required"},
+                                status=status.HTTP_400_BAD_REQUEST)
+            team = _as_team_code(s, team_raw)
+            TSDMachine(pk).ban_slayer_map(team, int(map_id))
+            return Response({"detail": "Slayer map banned"}, status=status.HTTP_200_OK)
         except (GuardError, TurnError) as e:
-            print(f"[DEBUG] TSD error: {e}")
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            print(f"[DEBUG] Unexpected error: {e}")
-            return Response({"detail": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
     @action(detail=True, methods=["post"], url_path="pick_objective_combo", url_name="series-pick-objective-combo")
     def pick_objective_combo(self, request, pk=None):
         """Pick an objective combo using TSD machine"""
         try:
-            team = request.data.get("team")
-            map_id = request.data.get("map")
-            mode_id = request.data.get("mode")
-            
-            if not all([team, map_id, mode_id]):
-                return Response(
-                    {"detail": "team, map, and mode are required"}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            print(f"[DEBUG] pick_objective_combo called: team={team}, mode={mode_id}, map={map_id}")
-            
-            m = TSDMachine(pk)
-            # Check what method name exists in your TSD machine
-            if hasattr(m, 'pick_objective_combo'):
-                m.pick_objective_combo(team, int(mode_id), int(map_id))
-            elif hasattr(m, 'pick_combo'):
-                m.pick_combo(team, int(mode_id), int(map_id))
-            elif hasattr(m, 'pick_objective'):
-                m.pick_objective(team, int(mode_id), int(map_id))
-            else:
-                return Response(
-                    {"detail": "Pick method not found in TSD machine"}, 
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-            
-            return Response({"detail": "Objective combo picked successfully"}, status=status.HTTP_200_OK)
-            
+            s = get_object_or_404(Series, pk=pk)
+            team_raw = request.data.get("team")
+            map_id = request.data.get("map") or request.data.get("map_id")
+            mode_id = request.data.get("mode") or request.data.get("mode_id") or request.data.get("objective_mode_id")
+            if not all([team_raw, map_id, mode_id]):
+                return Response({"detail": "team, map/map_id, and mode/mode_id are required"},
+                                status=status.HTTP_400_BAD_REQUEST)
+            team = _as_team_code(s, team_raw)
+            TSDMachine(pk).pick_objective_combo(team, int(mode_id), int(map_id))
+            return Response({"detail": "Objective combo picked"}, status=status.HTTP_200_OK)
         except (GuardError, TurnError) as e:
-            print(f"[DEBUG] Pick error: {e}")
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            print(f"[DEBUG] Pick error: {e}")
-            return Response({"detail": f"Pick error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=["post"], url_path="pick_slayer_map", url_name="series-pick-slayer-map")
     def pick_slayer_map(self, request, pk=None):
         """Pick a slayer map using TSD machine"""
         try:
-            team = request.data.get("team")
-            map_id = request.data.get("map")
-            
-            if not all([team, map_id]):
-                return Response(
-                    {"detail": "team and map are required"}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            print(f"[DEBUG] pick_slayer_map called: team={team}, map={map_id}")
-            
-            m = TSDMachine(pk)
-            # Check what method name exists in your TSD machine
-            if hasattr(m, 'pick_slayer_map'):
-                m.pick_slayer_map(team, int(map_id))
-            elif hasattr(m, 'pick_slayer'):
-                m.pick_slayer(team, int(map_id))
-            elif hasattr(m, 'pick_map'):
-                m.pick_map(team, int(map_id))
-            else:
-                return Response(
-                    {"detail": "Pick slayer method not found in TSD machine"}, 
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-            
-            return Response({"detail": "Slayer map picked successfully"}, status=status.HTTP_200_OK)
-            
+            s = get_object_or_404(Series, pk=pk)
+            team_raw = request.data.get("team")
+            map_id = request.data.get("map") or request.data.get("map_id")
+            if not all([team_raw, map_id]):
+                return Response({"detail": "team and map/map_id are required"},
+                                status=status.HTTP_400_BAD_REQUEST)
+            team = _as_team_code(s, team_raw)
+            TSDMachine(pk).pick_slayer_map(team, int(map_id))
+            return Response({"detail": "Slayer map picked"}, status=status.HTTP_200_OK)
         except (GuardError, TurnError) as e:
-            print(f"[DEBUG] Pick error: {e}")
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            print(f"[DEBUG] Pick error: {e}")
-            return Response({"detail": f"Pick error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    # ...existing code...
 
 class ActionViewSet(viewsets.ModelViewSet):
     """
