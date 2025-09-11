@@ -7,13 +7,15 @@ from .models import (
     SlotType, BanKind, GameMode, Map
 )
 
-# 5-step ban schedule (A obj, B obj, A obj, B slayer, A slayer)
+# 7-step ban schedule (A obj, B obj, A obj, B obj, A obj, B slayer, A slayer)
 BAN_SCHEDULE = [
-    ("A", BanKind.OBJECTIVE_COMBO),
-    ("B", BanKind.OBJECTIVE_COMBO),
-    ("A", BanKind.OBJECTIVE_COMBO),
-    ("B", BanKind.SLAYER_MAP),
-    ("A", BanKind.SLAYER_MAP),
+    ("A", BanKind.OBJECTIVE_COMBO),  # Step 1: Team A bans one Objective and map combination
+    ("B", BanKind.OBJECTIVE_COMBO),  # Step 2: Team B bans one Objective and map combination
+    ("A", BanKind.OBJECTIVE_COMBO),  # Step 3: Team A bans one Objective and map combination
+    ("B", BanKind.OBJECTIVE_COMBO),  # Step 4: Team B bans one Objective and map combination
+    ("A", BanKind.OBJECTIVE_COMBO),  # Step 5: Team A bans one Objective and map combination
+    ("B", BanKind.SLAYER_MAP),       # Step 6: Team B bans one Slayer map
+    ("A", BanKind.SLAYER_MAP),       # Step 7: Team A bans one Slayer map
 ]
 
 
