@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Series, SeriesBan, SeriesRound, Map, GameMode, Action
+from .models import Series, SeriesBan, SeriesRound, Map, GameMode, Action, BanKind, SlotType
 
 class GameModeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -54,8 +54,51 @@ class SeriesSerializer(serializers.ModelSerializer):
     
     def get_actions(self, obj):
         try:
-            # Get data from the Action model (which has related_name='actions')
             actions = []
+
+            # 1) Ban actions from SeriesBan model
+            for ban in obj.bans.all():
+                # Determine mode_id for Slayer bans
+                if ban.kind == BanKind.SLAYER_MAP:
+                    slayer_mode = GameMode.objects.filter(name__iexact="Slayer").first()
+                    mode_id = slayer_mode.id if slayer_mode else None
+                    mode_name = slayer_mode.name if slayer_mode else "Slayer"
+                else:
+                    mode_id = ban.objective_mode_id
+                    mode_name = ban.objective_mode.name if ban.objective_mode else None
+
+                actions.append({
+                    "id": f"ban_{ban.id}",
+                    "action_type": "BAN",
+                    "team": ban.by_team,
+                    "map": ban.map_id,
+                    "mode": mode_id,
+                    "step": ban.step_index,
+                    "kind": ban.kind,            # ← ensure this is set
+                    "map_name": ban.map.name,    # optional debug
+                    "mode_name": mode_name,      # optional debug
+                })
+
+            # 2) Pick actions from SeriesRound model
+            for rnd in obj.rounds.all():
+                if not rnd.pick_map_id:
+                    continue
+
+                kind = BanKind.SLAYER_MAP if rnd.slot_type == SlotType.SLAYER else BanKind.OBJECTIVE_COMBO
+                actions.append({
+                    "id": f"round_{rnd.id}",
+                    "action_type": "PICK",
+                    "team": rnd.pick_by,
+                    "map": rnd.pick_map_id,
+                    "mode": rnd.mode_id,
+                    "step": rnd.order,
+                    "kind": kind,             # ← ensure this is set
+                    "slot_type": rnd.slot_type,    # optional debug
+                    "map_name": rnd.pick_map.name,
+                    "mode_name": rnd.mode.name if rnd.mode else None,
+                })
+
+            # 3) Actions from Action model (if any exist)
             for action in obj.actions.all():
                 actions.append({
                     'id': action.id,
@@ -63,34 +106,12 @@ class SeriesSerializer(serializers.ModelSerializer):
                     'team': action.team,
                     'map': action.map_id,
                     'mode': action.mode_id,
-                    'step': action.step
+                    'step': action.step,
+                    'kind': getattr(action, 'kind', None),  # Add kind if it exists
                 })
-            
-            # Also get data from SeriesBan model (which has related_name='bans')
-            for ban in obj.bans.all():
-                actions.append({
-                    'id': f"ban_{ban.id}",
-                    'action_type': 'BAN',
-                    'team': ban.by_team,
-                    'map': ban.map_id,
-                    'mode': ban.objective_mode_id,
-                    'step': ban.step_index
-                })
-            
-            # Get data from SeriesRound model (which has related_name='rounds')
-            for round_obj in obj.rounds.all():
-                if round_obj.pick_map_id:  # Only include if actually picked
-                    actions.append({
-                        'id': f"round_{round_obj.id}",
-                        'action_type': 'PICK',
-                        'team': round_obj.pick_by,
-                        'map': round_obj.pick_map_id,
-                        'mode': round_obj.mode_id,
-                        'step': round_obj.order
-                    })
-            
-            # Sort by step
-            return sorted(actions, key=lambda x: x.get('step', 0))
+
+            # Sort by step index and return
+            return sorted(actions, key=lambda x: x.get("step", 0))
             
         except Exception as e:
             print(f"[DEBUG] Error getting actions: {e}")
