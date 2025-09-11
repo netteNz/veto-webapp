@@ -5,14 +5,13 @@ from veto.models import Map, GameMode as Mode  # Mode has fields: name (unique),
 
 OFFICIAL = {
     "Slayer": [
-        "Aquarius", "Live Fire", "Origin", "Recharge", "Solitude", "Streets"
+        "Aquarius", "Live Fire", "Origin", "Recharge", "Solitude", "Streets",
     ],
     "Capture the Flag": [
-        "Aquarius", "Forbidden", "Fortress", "Origin"
+        "Aquarius", "Forbidden", "Fortress", "Origin",
     ],
     "King of the Hill": [
         "Live Fire", "Recharge", "Lattice",
-          # added
     ],
     "Oddball": [
         "Live Fire", "Recharge", "Lattice",  # added
