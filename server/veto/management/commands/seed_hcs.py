@@ -11,19 +11,17 @@ OFFICIAL = {
         "Aquarius", "Forbidden", "Fortress", "Origin"
     ],
     "King of the Hill": [
-        "Live Fire", "Recharge", "Solitude",
-        "Lattice",  # added
+        "Live Fire", "Recharge", "Lattice",
+          # added
     ],
     "Oddball": [
-        "Live Fire", "Recharge", "Streets",
-        "Lattice",  # added
+        "Live Fire", "Recharge", "Lattice",  # added
     ],
     "Strongholds": [
-        "Live Fire", "Recharge",
-        "Lattice",  # added
+        "Live Fire", "Recharge", "Lattice",  # added
     ],
     "Neutral Bomb": [
-        "Aquarius", "Fortress"
+        "Aquarius"
     ],
 }
 
