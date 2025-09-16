@@ -285,8 +285,22 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    📚 Documentation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    🚀 Quick Start
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#related-projects" class="md-nav__link">
-    🌐 Related Projects
+    🔗 Related Projects
   </a>
   
 </li>
@@ -391,8 +405,22 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    📚 Documentation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    🚀 Quick Start
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#related-projects" class="md-nav__link">
-    🌐 Related Projects
+    🔗 Related Projects
   </a>
   
 </li>
@@ -425,7 +453,7 @@ It provides:</p>
 <li>📊 <strong>Action tracking</strong>: every ban/pick is recorded and retrievable</li>
 <li>🩺 <strong>Health endpoint</strong>: quick system status for monitoring</li>
 </ul>
-<p>The frontend (<a href="https://github.com/netteNz/veto-tsd"><strong>veto-tsd</strong></a>) consumes these endpoints to render the veto UI and final series layout.</p>
+<p>The frontend consumes these endpoints to render the veto UI and final series layout.</p>
 <hr />
 <h2 id="project-structure">📁 Project Structure</h2>
 <div class="highlight"><pre><span></span><code>server/
@@ -443,7 +471,7 @@ It provides:</p>
 <li>The <strong>frontend never enforces rules</strong> — it only calls API endpoints.</li>
 <li>State progression is handled by <code>TSDMachine</code> methods, exposed under <code>/api/series/{id}/...</code>.</li>
 <li>Every state update returns the current <strong>Series state</strong> (<code>state</code>, <code>turn</code>, <code>actions</code>) so the client can render the next step.</li>
-<li>Legal map/mode combinations are provided by <code>/api/maps/combos/</code> and <code>/api/maps/combos/grouped/</code>.</li>
+<li>Legal map/mode combinations are provided by <code>/api/maps/</code> and <code>/api/gamemodes/</code>.</li>
 <li>The <strong>SeriesSerializer</strong> merges bans, rounds, and actions for a complete veto history in one response.</li>
 </ul>
 <hr />
@@ -451,14 +479,9 @@ It provides:</p>
 <ul>
 <li><code>GET /api/health/</code> → API health &amp; counts</li>
 <li><code>GET /api/maps/</code> → list maps with supported modes</li>
-<li><code>GET /api/maps/combos/</code> → flat list of allowed map × mode pairs</li>
+<li><code>GET /api/combos/</code> → list available game modes</li>
 <li><code>POST /api/series/</code> → create a new series</li>
-<li><code>POST /api/series/{id}/assign_roles/</code> → assign team names</li>
-<li><code>POST /api/series/{id}/confirm_tsd/</code> → lock series type (Bo3/Bo5/Bo7)</li>
-<li><code>POST /api/series/{id}/ban_objective_combo/</code> → ban an objective mode/map</li>
-<li><code>POST /api/series/{id}/ban_slayer_map/</code> → ban a Slayer map</li>
-<li><code>POST /api/series/{id}/pick_objective_combo/</code> → pick objective mode/map</li>
-<li><code>POST /api/series/{id}/pick_slayer_map/</code> → pick a Slayer map</li>
+<li><code>POST /api/series/{id}/action/</code> → submit ban/pick actions</li>
 <li><code>POST /api/series/{id}/undo/</code> → undo last action</li>
 <li><code>POST /api/series/{id}/reset/</code> → reset the series</li>
 </ul>
@@ -471,10 +494,23 @@ It provides:</p>
 <li><strong>MkDocs Material</strong> — documentation site</li>
 </ul>
 <hr />
-<h2 id="related-projects">🌐 Related Projects</h2>
+<h2 id="documentation">📚 Documentation</h2>
 <ul>
-<li><a href="https://github.com/netteNz/veto-tsd">Frontend: veto-tsd</a> — React + Vite client</li>
+<li><strong><a href="api/">API Reference</a></strong> — Complete endpoint documentation with examples</li>
+<li><strong><a href="architecture/">Architecture</a></strong> — System design and state machine details</li>
 </ul>
+<hr />
+<h2 id="quick-start">🚀 Quick Start</h2>
+<ol>
+<li><strong>Set up the backend</strong>: Follow the installation guide in the project README</li>
+<li><strong>Create test data</strong>: Use the admin interface or API to add maps and game modes</li>
+<li><strong>Start a series</strong>: <code>POST /api/series/</code> with team names</li>
+<li><strong>Execute veto</strong>: Follow the ban/pick sequence using the action endpoint</li>
+<li><strong>View results</strong>: Get the complete series state with all actions</li>
+</ol>
+<hr />
+<h2 id="related-projects">🔗 Related Projects</h2>
+<p>The Veto API is designed to work with modern frontend frameworks through its REST API interface.</p>
 
 
 
