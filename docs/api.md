@@ -1,64 +1,218 @@
 # API Reference – Veto System
 
-This document describes the API endpoints available for interacting with the Veto System. All endpoints are served via REST and return JSON responses.
+This document describes the REST API endpoints for the HCS-style veto system. The API enforces proper ban/pick sequences through a finite state machine and validates all actions server-side.
 
 ---
 
-## Base URL
+## 📋 Table of Contents
 
-`/api/`
+- [Base Configuration](#-base-configuration)
+- [Authentication](#-authentication)
+- [Response Format](#-response-format)
+- [Series Management](#-series-management)
+- [Veto Actions](#-veto-actions)
+- [Administrative Actions](#-administrative-actions)
+- [Resource Endpoints](#-resource-endpoints)
+- [Error Handling](#-error-handling)
+- [Workflow Examples](#-workflow-examples)
 
 ---
 
-## Authentication
+## 🔧 Base Configuration
 
-Currently, the API is publicly accessible for testing and development purposes. Authentication will be added in future versions.
+**Base URL:** `/api/`
+
+**Content-Type:** `application/json`
+
+**Rate Limiting:** None (development)
+
+**API Version:** v1
 
 ---
 
-## Endpoints
+## 🔐 Authentication
 
-### 🔸 Create a New Series
+Currently, the API is publicly accessible for testing and development purposes. 
+
+**Future Implementation:**
+- Token-based authentication
+- Team-based permissions
+- Role-based access control
+
+---
+
+## 📨 Response Format
+
+### Success Response Structure
+```json
+{
+  "id": 123,
+  "data": { /* resource data */ },
+  "meta": {
+    "timestamp": "2025-09-16T14:30:00Z",
+    "api_version": "v1"
+  }
+}
+```
+
+### Error Response Structure
+```json
+{
+  "error": {
+    "code": "INVALID_TRANSITION",
+    "message": "Cannot ban during PICK_WINDOW phase",
+    "details": {
+      "current_state": "PICK_WINDOW",
+      "expected_action": "pick",
+      "provided_action": "ban"
+    }
+  },
+  "meta": {
+    "timestamp": "2025-09-16T14:30:00Z",
+    "request_id": "req_abc123"
+  }
+}
+```
+
+---
+
+## 🎮 Series Management
+
+### Create New Series
 
 **POST** `/api/series/`
 
-Create a new veto series with two teams.
+Creates a new veto series and initializes the state machine.
 
-### Request Body
+#### Request Body
 ```json
 {
-  "team_a": "Red Dragons",
-  "team_b": "Blue Cobras"
-}
-```
-### Response
-```json
-{
-  "id": 11,
   "team_a": "Red Dragons",
   "team_b": "Blue Cobras",
-  "state": "idle",
-  "created_at": "2025-08-17T02:53:49Z"
+  "series_type": "Bo5"  // Optional: "Bo3", "Bo5", "Bo7"
+}
+```
+
+#### Response (201 Created)
+```json
+{
+  "id": 42,
+  "team_a": "Red Dragons",
+  "team_b": "Blue Cobras",
+  "state": "IDLE",
+  "series_type": null,
+  "current_turn": null,
+  "ban_index": 0,
+  "round_index": 0,
+  "created_at": "2025-09-16T14:30:00Z",
+  "actions": [],
+  "bans": [],
+  "rounds": []
 }
 ```
 
 ---
 
-### 🔸 Get Series Details
+### Get Series Details
 
 **GET** `/api/series/{id}/`
 
-Returns the current state and transaction history of a series.
+Returns the complete state of a series including all actions, bans, and rounds.
+
+#### Response (200 OK)
+```json
+{
+  "id": 42,
+  "team_a": "Red Dragons",
+  "team_b": "Blue Cobras",
+  "state": "BAN_PHASE",
+  "series_type": "Bo5",
+  "current_turn": {
+    "team": "A",
+    "action": "BAN",
+    "kind": "OBJECTIVE_COMBO"
+  },
+  "ban_index": 2,
+  "round_index": 0,
+  "created_at": "2025-09-16T14:30:00Z",
+  "updated_at": "2025-09-16T14:35:00Z",
+  "actions": [
+    {
+      "id": 1,
+      "step": 1,
+      "action_type": "ban",
+      "team": "A",
+      "map": 5,
+      "mode": 2,
+      "created_at": "2025-09-16T14:31:00Z"
+    }
+  ],
+  "bans": [
+    {
+      "id": 1,
+      "order": 1,
+      "kind": "OBJECTIVE_COMBO",
+      "team": "A",
+      "map": "Guardian",
+      "mode": "King of the Hill"
+    }
+  ],
+  "rounds": [
+    {
+      "id": 1,
+      "order": 1,
+      "slot_type": "OBJECTIVE",
+      "picked_by": null,
+      "map": null,
+      "mode": null
+    }
+  ]
+}
+```
 
 ---
 
-### 🔸 Submit Action
+### List All Series
+
+**GET** `/api/series/`
+
+Returns paginated list of all series.
+
+#### Query Parameters
+- `page` (int): Page number (default: 1)
+- `page_size` (int): Items per page (default: 20, max: 100)
+- `state` (string): Filter by state (`IDLE`, `BAN_PHASE`, etc.)
+- `team` (string): Filter by team name
+
+#### Response (200 OK)
+```json
+{
+  "count": 150,
+  "next": "/api/series/?page=2",
+  "previous": null,
+  "results": [
+    {
+      "id": 42,
+      "team_a": "Red Dragons",
+      "team_b": "Blue Cobras",
+      "state": "BAN_PHASE",
+      "created_at": "2025-09-16T14:30:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## ⚔️ Veto Actions
+
+### Submit Action
 
 **POST** `/api/series/{id}/action/`
 
 Submit a veto or map/gametype selection.
 
-Request Body
+#### Request Body
 ```json
 {
   "type": "veto",
@@ -69,28 +223,28 @@ Request Body
 
 ---
 
-### 🔸 Undo Last Action
+### Undo Last Action
 
 **POST** `/api/series/{id}/undo/`
 
 Undo the most recent action in the series.
 
 
-### 🔸 Reset Series
+### Reset Series
 
 **POST** `/api/series/{id}/reset/`
 
 Resets the entire series to its initial state.
 
 
-### 🔸 List Maps
+### List Maps
 
 **GET** `/api/maps/`
 
 Returns a list of all available maps and supported gametypes.
 
 
-### 🔸 List Gametypes
+### List Gametypes
 
 **GET** `/api/gametypes/`
 
@@ -99,39 +253,47 @@ Returns a list of available game modes (e.g. Slayer, CTF, Strongholds).
 
 ---
 
-### Status Codes
+## 🛠 Administrative Actions
 
-200 OK – Success
+### Force Transition
 
-201 Created – Resource created
+**POST** `/api/series/{id}/transition/`
 
-400 Bad Request – Invalid input
+Force a state transition (admin use only).
 
-404 Not Found – Resource not found
-
-422 Unprocessable Entity – Invalid state transition
-
-500 Internal Server Error – Server error
-
-
+#### Request Body
+```json
+{
+  "state": "PICK_WINDOW"
+}
+```
 
 ---
 
-Example Flow
+## ❌ Error Handling
 
-1. **POST** `/api/series/` → Create series
+### Client Errors
 
+- **400 Bad Request**: Invalid input or request format.
+- **401 Unauthorized**: Authentication required.
+- **403 Forbidden**: Insufficient permissions.
+- **404 Not Found**: Resource not found.
+- **409 Conflict**: Request conflicts with the current state.
+- **422 Unprocessable Entity**: Invalid state transition.
 
-2. **POST** `/api/series/{id}/action/` → Submit valid action
+### Server Errors
 
+- **500 Internal Server Error**: Unexpected server error.
+- **503 Service Unavailable**: API temporarily unavailable.
 
-3. **POST** `/api/series/{id}/undo/` → Undo previous action
+---
 
+## 🔄 Workflow Examples
 
-4. **POST** `/api/series/{id}/reset/` → Reset the series
-
-
-
+1. **Create a Series**: `POST /api/series/`
+2. **Submit Action**: `POST /api/series/{id}/action/`
+3. **Undo Action**: `POST /api/series/{id}/undo/`
+4. **Reset Series**: `POST /api/series/{id}/reset/`
 
 ---
 
@@ -145,4 +307,4 @@ Game modes are classified as is_objective: true/false in /gametypes/.
 
 ---
 
-Last updated: August 17, 2025
+Last updated: September 16, 2025
