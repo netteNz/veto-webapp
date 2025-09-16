@@ -1,4 +1,3 @@
-
 # Welcome to the Veto API Docs
 
 A modular, scalable backend powering competitive match veto processes for Halo and beyond.
@@ -16,7 +15,7 @@ It provides:
 - 📊 **Action tracking**: every ban/pick is recorded and retrievable
 - 🩺 **Health endpoint**: quick system status for monitoring
 
-The frontend ([**veto-tsd**](https://github.com/netteNz/veto-tsd)) consumes these endpoints to render the veto UI and final series layout.
+The frontend consumes these endpoints to render the veto UI and final series layout.
 
 ---
 
@@ -40,7 +39,7 @@ server/
 * The **frontend never enforces rules** — it only calls API endpoints.
 * State progression is handled by `TSDMachine` methods, exposed under `/api/series/{id}/...`.
 * Every state update returns the current **Series state** (`state`, `turn`, `actions`) so the client can render the next step.
-* Legal map/mode combinations are provided by `/api/maps/combos/` and `/api/maps/combos/grouped/`.
+* Legal map/mode combinations are provided by `/api/maps/` and `/api/gamemodes/`.
 * The **SeriesSerializer** merges bans, rounds, and actions for a complete veto history in one response.
 
 ---
@@ -49,14 +48,9 @@ server/
 
 * `GET /api/health/` → API health & counts
 * `GET /api/maps/` → list maps with supported modes
-* `GET /api/maps/combos/` → flat list of allowed map × mode pairs
+* `GET /api/combos/` → list available game modes
 * `POST /api/series/` → create a new series
-* `POST /api/series/{id}/assign_roles/` → assign team names
-* `POST /api/series/{id}/confirm_tsd/` → lock series type (Bo3/Bo5/Bo7)
-* `POST /api/series/{id}/ban_objective_combo/` → ban an objective mode/map
-* `POST /api/series/{id}/ban_slayer_map/` → ban a Slayer map
-* `POST /api/series/{id}/pick_objective_combo/` → pick objective mode/map
-* `POST /api/series/{id}/pick_slayer_map/` → pick a Slayer map
+* `POST /api/series/{id}/action/` → submit ban/pick actions
 * `POST /api/series/{id}/undo/` → undo last action
 * `POST /api/series/{id}/reset/` → reset the series
 
@@ -71,6 +65,23 @@ server/
 
 ---
 
-## 🌐 Related Projects
+## 📚 Documentation
 
-* [Frontend: veto-tsd](https://github.com/netteNz/veto-tsd) — React + Vite client
+- **[API Reference](api.md)** — Complete endpoint documentation with examples
+- **[Architecture](architecture.md)** — System design and state machine details
+
+---
+
+## 🚀 Quick Start
+
+1. **Set up the backend**: Follow the installation guide in the project README
+2. **Create test data**: Use the admin interface or API to add maps and game modes
+3. **Start a series**: `POST /api/series/` with team names
+4. **Execute veto**: Follow the ban/pick sequence using the action endpoint
+5. **View results**: Get the complete series state with all actions
+
+---
+
+## 🔗 Related Projects
+
+The Veto API is designed to work with modern frontend frameworks through its REST API interface.
