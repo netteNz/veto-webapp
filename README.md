@@ -64,12 +64,12 @@ pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
 ```
-
 ---
 
 📬 REST API Overview
 
 Each transaction is step-based and RESTful.
+
 ```plaintext
 	•	POST /series/ – create a new series
 	•	GET /series/:id/state/ – fetch current veto state
