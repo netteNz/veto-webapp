@@ -64,13 +64,6 @@ pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
 ```
-⚛️ Frontend
-
-```bash
-cd client/veto-board/
-npm install
-npm run dev
-```
 
 ---
 
