@@ -49,13 +49,41 @@ REST_FRAMEWORK = {
     # Exception handler
     "EXCEPTION_HANDLER": "api.exceptions.drf_exception_handler",
 }
-# Allow only on .onrender.com in prod, localhost for dev
 
+# CORS Configuration
+CORS_ALLOWED_ORIGINS = [
+    "https://nettenz.github.io",  # ✅ Your GitHub Pages frontend
+    "http://localhost:5173",       # Local Vite dev
+    "http://127.0.0.1:5173",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = ['DELETE', 'GET', 'OPTIONS', 'PATCH', 'POST', 'PUT']
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+
+# Allowed hosts
 ALLOWED_HOSTS = [
-    ".onrender.com", 
-    ".railway.app",  # Add Railway support
-    "localhost", 
+    ".railway.app",      # ✅ Railway deployments
+    "nettenz.github.io", # ✅ GitHub Pages
+    "localhost",
     "127.0.0.1"
+]
+
+# CSRF trusted origins
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.railway.app",
+    "https://nettenz.github.io",
 ]
 
 
@@ -100,27 +128,6 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-
-CORS_ALLOWED_ORIGINS = [
-    "https://nettenz.github.io",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "https://*.railway.app",  # Add this - allows any Railway subdomain
-    # OR specify your exact frontend URL once deployed:
-    # "https://your-frontend-app.railway.app",
-]
-
-CORS_ALLOW_CREDENTIALS = True
-
-# (optional, but can make preflight explicit)
-CORS_ALLOW_HEADERS = [
-    "accept", "accept-encoding", "authorization", "content-type",
-    "dnt", "origin", "user-agent", "x-csrftoken", "x-requested-with",
-]
-
-CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
-
-CSRF_TRUSTED_ORIGINS = ["https://*.railway.app", "https://nettenz.github.io"]
 
 ROOT_URLCONF = 'api.urls'
 
