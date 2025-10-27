@@ -1,0 +1,8 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pip install -r requirements.txt"
+
+[deploy]
+startCommand = "python server/manage.py migrate && gunicorn --chdir server api.wsgi:application --bind 0.0.0.0:$PORT"
+restartPolicyType = "on-failure"
+restartPolicyMaxRetries = 10

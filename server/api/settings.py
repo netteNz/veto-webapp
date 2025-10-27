@@ -112,7 +112,7 @@ CORS_ALLOW_HEADERS = [
 
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
 
-CSRF_TRUSTED_ORIGINS = ["https://*.onrender.com", "https://nettenz.github.io"]
+CSRF_TRUSTED_ORIGINS = ["https://*.railway.app", "https://nettenz.github.io"]
 
 ROOT_URLCONF = 'api.urls'
 

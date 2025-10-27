@@ -18,8 +18,3 @@ transitions
 django-jazzmin
 django-autocomplete-light
 django-import-export
-# EB runtime deps
-Django
-gunicorn
-psycopg[binary]
-dj-database-url
