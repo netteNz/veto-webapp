@@ -74,10 +74,10 @@ CORS_ALLOW_HEADERS = [
 
 # Allowed hosts
 ALLOWED_HOSTS = [
-    ".railway.app",      # ✅ Railway deployments
-    "nettenz.github.io", # ✅ GitHub Pages
-    "localhost",
-    "127.0.0.1"
+    'veto-webapp-production.railway.app',  # Add this
+    'veto-webapp-production.up.railway.app',
+    '*.railway.app',
+    '*.netlenz.github.io',
 ]
 
 # CSRF trusted origins
