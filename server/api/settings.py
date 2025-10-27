@@ -51,7 +51,12 @@ REST_FRAMEWORK = {
 }
 # Allow only on .onrender.com in prod, localhost for dev
 
-ALLOWED_HOSTS = [".onrender.com", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = [
+    ".onrender.com", 
+    ".railway.app",  # Add Railway support
+    "localhost", 
+    "127.0.0.1"
+]
 
 
 # Application definition
@@ -100,6 +105,9 @@ CORS_ALLOWED_ORIGINS = [
     "https://nettenz.github.io",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://*.railway.app",  # Add this - allows any Railway subdomain
+    # OR specify your exact frontend URL once deployed:
+    # "https://your-frontend-app.railway.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
