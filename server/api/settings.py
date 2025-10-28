@@ -54,7 +54,7 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "https://nettenz.github.io",  # ✅ Your GitHub Pages frontend
     "http://localhost:5173",       # Local Vite dev
-    "http://127.0.0.1:5173",
+    "http://localhost:8000",       # Local Django dev
 ]
 
 CORS_ALLOW_CREDENTIALS = True
