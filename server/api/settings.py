@@ -13,6 +13,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 import os
 import dj_database_url
+from dotenv import load_dotenv
+
+# Load .env file
+load_dotenv(Path(__file__).resolve().parent.parent / '.env')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -74,10 +78,13 @@ CORS_ALLOW_HEADERS = [
 
 # Allowed hosts
 ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '0.0.0.0',
     'veto-webapp-production.railway.app',  # Add this
     'veto-webapp-production.up.railway.app',
     '*.railway.app',
-    '*.netlenz.github.io',
+    '*.nettenz.github.io',
 ]
 
 # CSRF trusted origins
